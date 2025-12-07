@@ -1,0 +1,21 @@
+@startuml
+skinparam shadowing false
+skinparam rectangleStyle rounded
+skinparam componentStyle rectangle
+
+actor "User" as User
+
+rectangle "Demi 중고거래 채팅 서비스" as Demi {
+  component "웹 앱\n(브라우저 UI)" as WebApp
+  component "백엔드 서버\n(Node.js / Express / Socket.IO)" as Backend
+}
+
+database "storage.json\n(JSON 데이터 저장소)" as Storage
+cloud "OpenAI API\n(LLM 서비스)" as OpenAI
+
+User --> WebApp : 브라우저로 접속\n채팅/글 작성/약속 예약
+WebApp --> Backend : HTTP 요청 / WebSocket
+Backend --> Storage : 게시글/채팅/약속 저장/조회
+Backend --> OpenAI : 판매글 자동 작성 요청\n(이미지 + 텍스트)
+
+@enduml

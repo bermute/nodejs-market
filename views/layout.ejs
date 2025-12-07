@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= typeof pageTitle !== "undefined" ? pageTitle : "중고거래 도우미" %></title>
+  <link rel="stylesheet" href="/css/styles.css" />
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+</head>
+<body>
+  <div id="notification-banner" class="notification-banner hidden"></div>
+  <header class="site-header">
+    <div>
+      <h1><a href="/">중고거래 판매글·채팅·약속잡기</a></h1>
+      <p class="subtitle">Node.js + OpenAI 실습용 미니 서비스</p>
+    </div>
+    <div class="user-switcher">
+      <label for="userSelect">현재 사용자</label>
+      <select id="userSelect" data-current-path="<%= typeof request !== 'undefined' ? request.path : '/' %>">
+        <% (users || []).forEach((user) => { %>
+          <option value="<%= user.id %>" <%= user.id === currentUserId ? "selected" : "" %>>
+            <%= user.name %> (<%= user.address %>)
+          </option>
+        <% }) %>
+      </select>
+      <a href="/posts/new?user=<%= currentUserId %>" class="btn primary">판매글 올리기</a>
+    </div>
+  </header>
+
+  <main class="page-container">
+    <% if (typeof renderBody === "function") { %>
+      <% renderBody() %>
+    <% } %>
+  </main>
+
+  <script>
+    window.App = {
+      currentUserId: "<%= currentUserId || 'user1' %>",
+      currentPostId: "<%= typeof post !== "undefined" && post ? post.id : "" %>",
+      sellerId: "<%= typeof post !== "undefined" && post ? post.sellerId : "" %>"
+    };
+  </script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/main.js"></script>
+  <script src="/js/ai-helper.js"></script>
+  <script src="/js/chat.js"></script>
+  <script src="/js/schedule.js"></script>
+</body>
+</html>
+
+
+

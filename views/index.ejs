@@ -1,0 +1,33 @@
+<% const renderBody = () => { %>
+  <section class="hero-card">
+    <h2>동네 이웃들이 올린 판매글</h2>
+    <p>궁금한 물건이 있으면 판매자와 바로 채팅하고 약속을 잡아보세요.</p>
+  </section>
+
+  <section class="post-grid">
+    <% if (!posts || posts.length === 0) { %>
+      <p>아직 등록된 판매글이 없습니다. 첫 번째 글을 올려보세요!</p>
+    <% } else { %>
+      <% posts.forEach((post) => { %>
+        <article class="post-card">
+          <img src="<%= post.imageUrl %>" alt="<%= post.title %>" />
+          <div class="post-card__body">
+            <span class="badge <%= post.status %>"><%= post.status %></span>
+            <h3><%= post.title %></h3>
+            <p class="price"><%= post.price.toLocaleString() %> 원</p>
+            <p class="meta"><%= post.location %></p>
+          </div>
+          <a class="btn secondary" href="/posts/<%= post.id %>?user=<%= currentUserId %>">상세 보기</a>
+        </article>
+      <% }) %>
+    <% } %>
+  </section>
+<% } %>
+
+<%- include("layout", {
+  renderBody,
+  pageTitle: "판매글 리스트"
+}) %>
+
+
+

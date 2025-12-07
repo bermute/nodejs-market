@@ -1,0 +1,130 @@
+<% const otherUser = (users || []).find((user) => user.id !== currentUserId); %>
+<% const defaultReceiverId = currentUserId === post.sellerId ? (otherUser?.id || currentUserId) : post.sellerId; %>
+<% const renderBody = () => { %>
+  <section class="post-detail">
+    <div class="detail-actions">
+      <a class="btn secondary" href="/?user=<%= currentUserId %>">&larr; 목록으로 돌아가기</a>
+      <% if (post.sellerId === currentUserId) { %>
+        <form method="POST" action="/posts/<%= post.id %>/delete?user=<%= currentUserId %>" onsubmit="return confirm('정말로 이 판매글을 삭제할까요?');">
+          <button type="submit" class="btn danger">게시글 삭제</button>
+        </form>
+      <% } %>
+    </div>
+    <% if (errorMessage) { %>
+      <div class="alert error"><%= errorMessage %></div>
+    <% } %>
+    <div class="post-detail__hero">
+      <img src="<%= post.imageUrl %>" alt="<%= post.title %>" />
+      <div>
+        <span class="badge <%= post.status %>"><%= post.status %></span>
+        <h2><%= post.title %></h2>
+        <p class="price big"><%= post.price.toLocaleString() %> 원</p>
+        <p class="meta">거래 지역: <%= post.location %></p>
+        <p class="meta">등록일: <%= dayjs(post.createdAt).format("YYYY-MM-DD HH:mm") %></p>
+        <p class="description"><%= post.description %></p>
+      </div>
+    </div>
+
+    <div class="columns">
+      <section class="panel chat-panel">
+        <div class="panel__header">
+          <h3>채팅</h3>
+        </div>
+        <div id="chatMessages" class="chat-log" data-post-id="<%= post.id %>" data-seller-id="<%= post.sellerId %>">
+          <% if (messages && messages.length > 0) { %>
+            <% messages.forEach((msg) => { %>
+              <div class="chat-message <%= msg.senderId === currentUserId ? "me" : "" %>">
+                <p class="sender"><%= msg.senderName || msg.senderId %></p>
+                <p><%= msg.content %></p>
+                <small><%= dayjs(msg.createdAt).format("HH:mm") %></small>
+              </div>
+            <% }) %>
+          <% } else { %>
+            <p class="empty">아직 메시지가 없습니다. 첫 인사를 보내보세요!</p>
+          <% } %>
+        </div>
+        <form id="chatForm" class="chat-form">
+          <input type="hidden" name="postId" value="<%= post.id %>">
+          <input type="hidden" name="senderId" value="<%= currentUserId %>">
+          <input type="hidden" name="receiverId" value="<%= defaultReceiverId %>">
+          <input type="text" name="content" placeholder="메시지를 입력하세요" required />
+          <button type="submit" class="btn primary">전송</button>
+        </form>
+      </section>
+
+      <section class="panel appointment-panel" data-post-id="<%= post.id %>">
+        <div class="panel__header">
+          <h3>약속잡기</h3>
+        </div>
+        <% if (post.sellerId === currentUserId) { %>
+          <button class="btn primary" id="openScheduleModal">약속 등록하기</button>
+        <% } else { %>
+          <p>판매자에게 약속을 요청해 보세요!</p>
+        <% } %>
+
+        <% const isAppointmentParticipant = appointment && (appointment.sellerId === currentUserId || appointment.buyerId === currentUserId); %>
+        <div class="appointment-info"
+             data-has-appointment="<%= appointment ? "true" : "false" %>"
+             data-cancel-requested-by="<%= appointment?.cancelRequestedBy || "" %>"
+             data-is-participant="<%= isAppointmentParticipant ? "true" : "false" %>">
+          <% if (appointment) { %>
+            <p><strong>약속 일시:</strong> <%= dayjs(appointment.datetime).format("YYYY-MM-DD HH:mm") %></p>
+            <p><strong>장소:</strong> <%= appointment.place %></p>
+            <p><strong>참여자:</strong> 판매자(<%= appointment.sellerId %>) / 구매자(<%= appointment.buyerId %>)</p>
+            <% if (isAppointmentParticipant) { %>
+              <% if (appointment.cancelRequestedBy && appointment.cancelRequestedBy === currentUserId) { %>
+                <p class="notice">상대방의 철회 동의를 기다리는 중입니다.</p>
+              <% } else if (appointment.cancelRequestedBy && appointment.cancelRequestedBy !== currentUserId) { %>
+                <p class="notice">상대방이 약속 철회를 요청했습니다. 동의하면 예약이 취소됩니다.</p>
+                <button class="btn secondary" id="approveCancelBtn">철회 동의하기</button>
+              <% } else { %>
+                <button class="btn secondary" id="requestCancelBtn">약속 철회 요청</button>
+              <% } %>
+            <% } %>
+          <% } else { %>
+            <p>등록된 약속이 없습니다.</p>
+          <% } %>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <div class="modal" id="scheduleModal">
+    <div class="modal__content">
+      <h3>약속잡기</h3>
+      <form id="appointmentForm" data-post-id="<%= post.id %>">
+        <input type="hidden" name="sellerId" value="<%= post.sellerId %>">
+        <div class="form-field">
+          <label for="buyerId">구매자 선택</label>
+          <select name="buyerId" id="buyerId">
+            <% (users || []).filter((user) => user.id !== post.sellerId).forEach((user) => { %>
+              <option value="<%= user.id %>"><%= user.name %> (<%= user.address %>)</option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-field">
+          <label for="date">날짜</label>
+          <input type="date" name="date" id="date" required />
+        </div>
+        <div class="form-field">
+          <label for="time">시간</label>
+          <input type="time" name="time" id="time" required />
+        </div>
+        <div class="form-field">
+          <label for="place">장소</label>
+          <input type="text" name="place" id="place" value="<%= post.location %>" required />
+        </div>
+        <div class="modal__actions">
+          <button class="btn secondary" data-action="close" type="button">취소</button>
+          <button class="btn primary" type="submit">등록</button>
+        </div>
+      </form>
+    </div>
+  </div>
+<% } %>
+
+<%- include("layout", {
+  renderBody,
+  pageTitle: post.title
+}) %>
+
